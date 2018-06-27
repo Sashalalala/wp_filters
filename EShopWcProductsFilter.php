@@ -115,43 +115,6 @@ class Filters {
 
         //render filters on hook
         add_action('eShopProductsFilters', array($this, 'renderAllFilters'));
-
-        //add rewrite rules
-
-        add_action('init', array($this, 'addRewriteRules'));
-    }
-
-    public function addRewriteRules(){
-
-        $delimiterRegEx = $this->getOption('delimiter');
-
-        add_rewrite_tag('f_pa_gender', '([^&]+)');
-
-        add_rewrite_rule('(ua)/shop/muzhskie/?$', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=muzhskie', 'top');
-        add_rewrite_rule('^shop/muzhskie/?$', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=muzhskie', 'top');
-        add_rewrite_rule('(ua)/shop/muzhskie/page/(\d?)/?', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=muzhskie&paged=$matches[2]', 'top');
-        add_rewrite_rule('^shop/muzhskie/page/(\d?)/?', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=muzhskie&paged=$matches[1]', 'top');
-
-        add_rewrite_rule('(ua)/shop/zhenskie/?$', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=zhenskie', 'top');
-        add_rewrite_rule('^shop/zhenskie/?$', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=zhenskie', 'top');
-        add_rewrite_rule('(ua)/shop/zhenskie/page/(\d?)/?', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=zhenskie&paged=$matches[2]', 'top');
-        add_rewrite_rule('^shop/zhenskie/page/(\d?)/?', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=zhenskie&paged=$matches[1]', 'top');
-
-        add_rewrite_rule('(ua)/shop/(muzhskie'.$delimiterRegEx.'zhenskie)/?$', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=$matches[2]', 'top');
-        add_rewrite_rule('^shop/(muzhskie'.$delimiterRegEx.'zhenskie)/?$', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=$matches[1]', 'top');
-        add_rewrite_rule('(ua)/shop/(muzhskie'.$delimiterRegEx.'zhenskie)/page/(\d?)/?', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=$matches[2]&paged=$matches[3]', 'top');
-        add_rewrite_rule('^shop/(muzhskie'.$delimiterRegEx.'zhenskie)/page/(\d?)/?', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=$matches[1]&paged=$matches[2]', 'top');
-
-        add_rewrite_rule('(ua)/shop/(zhenskie'.$delimiterRegEx.'muzhskie)/?$', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=$matches[2]', 'top');
-        add_rewrite_rule('^shop/(zhenskie'.$delimiterRegEx.'muzhskie)/?$', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=$matches[1]', 'top');
-        add_rewrite_rule('(ua)/shop/(zhenskie'.$delimiterRegEx.'muzhskie)/page/(\d?)/?', 'index.php?lang=$matches[1]&page_id=13330&filter=1&f_pa_gender=$matches[]&paged=$matches[3]', 'top');
-        add_rewrite_rule('^shop/(zhenskie'.$delimiterRegEx.'muzhskie)/page/(\d?)/?', 'index.php?lang=ru&page_id=13330&filter=1&f_pa_gender=$matches[1]&paged=$matches[2]', 'top');
-
-
-        add_rewrite_rule('(ua)/category/(.+?)/([a-z '.$delimiterRegEx.'? a-z]+)/?$', 'index.php?lang=$matches[1]&product_cat=$matches[2]&filter=1&f_pa_gender=$matches[3]', 'top');
-        add_rewrite_rule('^category/(.+?)/([a-z '.$delimiterRegEx.'? a-z]+)/?$', 'index.php?lang=ru&product_cat=$matches[1]&filter=1&f_pa_gender=$matches[2]', 'top');
-        add_rewrite_rule('(ua)/category/(.+?)/([a-z '.$delimiterRegEx.'? a-z]+)/page/(\d)/?', 'index.php?lang=$matches[1]&product_cat=$matches[2]&filter=1&f_pa_gender=$matches[3]&paged=$matches[4]', 'top');
-        add_rewrite_rule('^category/(.+?)/([a-z '.$delimiterRegEx.'? a-z]+)/page/(\d)/?', 'index.php?lang=ru&product_cat=$matches[1]&filter=1&f_pa_gender=$matches[2]&paged=$matches[3]', 'top');
     }
 
     /*
@@ -275,51 +238,10 @@ class Filters {
                 foreach ( $items['items'] as $taxKey=>&$taxValue ){
                     $unset = FiltersHelper::isParamSetted( array( $items['name'], $taxValue['slug'] ) , $curUrl);
                     $taxValue['url'] = $this->buildItemUrl($taxValue['slug'], $items['name'], $unset, $curUrl);
-                    $this->rewriteUrl($taxValue['url']);
                     if($unset) $taxValue['unset'] =  true;
                 }
             }
         }
-    }
-
-    public function rewriteUrl(&$url){
-        $parseUrl =  parse_url($url);
-        $path = $parseUrl['path'];
-        $query = array();
-        parse_str($parseUrl['query'],$query );
-
-        $pathArr = explode('/',trim($path, '/'));
-
-        if( $gender = $query['f_pa_gender']) {
-            unset($query['f_pa_gender']);
-            $isCat = array_search('category',$pathArr);
-            $isShop = array_search('shop',$pathArr);
-
-            if($isShop !== false){
-                $offset = $isShop+1;
-                $partEnd = array_splice($pathArr, $offset);
-                $pathArr[] = $gender;
-            } else if ($isCat !== false){
-                $offset = $isCat+2;
-                $partEnd = array_splice($pathArr, $offset);
-                $pathArr[] = $gender;
-            }
-            if($partEnd[0] !== 'page'){
-                unset($partEnd[0]); array_keys($partEnd);
-            }
-            $pathArr = array_merge($pathArr, $partEnd);
-        } else {
-            if($gender_m = array_search('muzhskie',$pathArr)){
-                unset($pathArr[$gender_m]);
-                array_keys($pathArr);
-            } else if ( $gender_z = array_search('zhenskie',$pathArr) ){
-                unset($pathArr[$gender_z]);
-                array_keys($pathArr);
-            }
-        }
-        $buildQuery = count($query)>1 ? '?' . http_build_query($query) : '';
-        $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . '://' . $_SERVER['HTTP_HOST'] . '/'. implode('/',$pathArr) . $buildQuery;
-
     }
 
     /**
@@ -328,15 +250,7 @@ class Filters {
      */
     public function getFiltersData( $url = '' ){
         $filterItems = array();
-        $currLang = 0;
         $genderParam = explode($this->getOption('delimiter'),$this->hasGenderParam());
-        $genderParam = count($genderParam )===1 && $genderParam[0]? $genderParam[0] : false;
-        if(function_exists('pll_the_languages')){
-            $langs = pll_the_languages(array('raw'=>1));
-            foreach ($langs as $lang){
-                if( $lang['current_lang'] ) $currLang = (int)$lang['id'];
-            }
-        }
         foreach ($this->getFilters() as $pos => $filter){
             $filterItems[$pos]['title'] = $filter['title'];
             $filterItems[$pos]['filterItems'] = array();
@@ -354,24 +268,19 @@ class Filters {
                                 'itemsType'=>'taxonomy',
                                 'items' => array()
                             );
-                            if( strpos($taxKey, 'pa_') !== false && $currLang ){
-                                $terms = customQueryForProductAttributes($taxKey, $currLang, $genderParam); // TODO : Include this function in class . After creating plugin delete this block!!!
-                                if(!count( $terms )) continue;
-                                $filterItems[$pos]['filterItems'][$counter]['items'] = $terms;
-                            } else {
-                                $taxonomyArgs = array(
-                                    'hierarchical' => false,
-                                    'suppress_filter'=>false,
-                                    'taxonomy' => $taxKey
+
+                            $taxonomyArgs = array(
+                                'hierarchical' => false,
+                                'suppress_filter'=>false,
+                                'taxonomy' => $taxKey
+                            );
+                            $terms = get_terms($taxonomyArgs);
+                            foreach ($terms as $term) {
+                                $filterItems[$pos]['filterItems'][$counter]['items'][] = array(
+                                    'id' => $term->term_id,
+                                    'name' => $term->name,
+                                    'slug' => $term->slug,
                                 );
-                                $terms = get_terms($taxonomyArgs);
-                                foreach ($terms as $term) {
-                                    $filterItems[$pos]['filterItems'][$counter]['items'][] = array(
-                                        'id' => $term->term_id,
-                                        'name' => $term->name,
-                                        'slug' => $term->slug,
-                                    );
-                                }
                             }
                             $counter++;
                         }
@@ -394,8 +303,8 @@ class Filters {
 
 }
 
-Filters::getInstance()->init();
+ function eShopFilters(){
+     return Filters::getInstance();
+ }
 
-function eShopFilters(){
-    return Filters::getInstance();
-}
+Filters::getInstance()->init();

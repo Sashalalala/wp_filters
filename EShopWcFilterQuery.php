@@ -114,9 +114,5 @@ class Query {
         }
     }
 
-    public function getFilteredPosts(){
-
-    }
-
 }
 
